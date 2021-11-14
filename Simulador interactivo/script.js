@@ -99,7 +99,6 @@ function main() {
 
 }
 
-main();
 
 /* funcion main:
     muestra mensaje bienvenida

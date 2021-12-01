@@ -37,6 +37,8 @@ class Varita {
     }
 };
 
+
+
 // Materias primas + JSON
 
 sessionStorage.setItem("Madera", JSON.stringify([
@@ -70,18 +72,27 @@ function main() {
 
 function mostrarMaderas() {
 
-    let inputMadera = document.createElement("input");
-    inputMadera.id = "texto";
-    const catalogo = maderas.sort((a, b) => {
+    maderas.sort((a, b) => {
         if (a.nombre < b.nombre) {
             return -1;
         } else {
             return 1;
         }
-    }).reduce((msj, mimadera) => { return msj + "<br>" + mimadera.nombre }, "");
 
-    mensajes.innerHTML = "Elije una opción entre las siguientes maderas, y escribí su nombre: " + catalogo;
-    document.getElementById("alertas").appendChild(inputMadera);
+    }).forEach((mimadera, index) => {
+        let radioBoton = document.createElement("input");
+        radioBoton.setAttribute("type", "radio");
+        radioBoton.setAttribute("name", "maderas");
+        radioBoton.setAttribute("id", index);
+        radioBoton.setAttribute("value", mimadera.nombre);
+        document.getElementById("lista").appendChild(radioBoton);
+        let etiqueta = document.createElement("label");
+        etiqueta.setAttribute("for", index);
+        etiqueta.innerHTML = mimadera.nombre;
+        document.getElementById("lista").appendChild(etiqueta);
+    });
+
+    mensajes.innerHTML = "Elije una opción entre las siguientes maderas:";
     document.getElementById("boton").onclick = elegirMadera;
 }
 
@@ -89,33 +100,42 @@ function elegirMadera() {
 
     // Solicita al usuario que elija una madera
 
-    let input = document.getElementById("texto");
+    let input = document.forms.lista.elements.maderas;
     const maderaelegida = maderas.find(mimadera => mimadera.nombre.toLowerCase() == input.value.toLowerCase());
     mensajes.innerHTML = maderaelegida.describirmadera();
-    document.getElementById("alertas").removeChild(input);
+    let lista = document.getElementById("lista");
+    while (lista.firstChild) {
+        lista.removeChild(lista.firstChild);
+    }
     document.getElementById("boton").onclick = mostrarNucleos;
     MaderaElegida = maderaelegida;
-
 }
-
-
-
 // Funciones nucleos
 
 function mostrarNucleos() {
 
     let inputNucleo = document.createElement("input");
     inputNucleo.id = "texto";
-    const catalogo = nucleos.sort((a, b) => {
+    nucleos.sort((a, b) => {
         if (a.nombre < b.nombre) {
             return -1;
         } else {
             return 1;
         }
-    }).reduce((msj, minucleo) => { return msj + "<br>" + minucleo.nombre }, "");
+    }).forEach((minucleo, index) => {
+        let radioBoton = document.createElement("input");
+        radioBoton.setAttribute("type", "radio");
+        radioBoton.setAttribute("name", "nucleos");
+        radioBoton.setAttribute("id", index);
+        radioBoton.setAttribute("value", minucleo.nombre);
+        document.getElementById("lista").appendChild(radioBoton);
+        let etiqueta = document.createElement("label");
+        etiqueta.setAttribute("for", index);
+        etiqueta.innerHTML = minucleo.nombre;
+        document.getElementById("lista").appendChild(etiqueta);
+    });
 
-    mensajes.innerHTML = "Elije una opción entre los siguientes nucleos, y escribí su nombre, CUIDADO! son frágiles!" + catalogo;
-    document.getElementById("alertas").appendChild(inputNucleo);
+    mensajes.innerHTML = "Elije una opción entre los siguientes nucleos, CUIDADO! son frágiles!";
     document.getElementById("boton").onclick = elegirNucleo;
 }
 
@@ -123,14 +143,16 @@ function elegirNucleo() {
 
     // Solicita al usuario que elija un Núcleo
 
-    let input = document.getElementById("texto");
+    let input = document.forms.lista.elements.nucleos;
     const nucleoelegido = nucleos.find(minucleo => minucleo.nombre.toLowerCase() == input.value.toLowerCase());
     mensajes.innerHTML = nucleoelegido.propiedad;
-    document.getElementById("alertas").removeChild(input);
-    NucleoElegido = nucleoelegido;
+    let lista = document.getElementById("lista");
+    while (lista.firstChild) {
+        lista.removeChild(lista.firstChild);
+    }
     document.getElementById("boton").onclick = varitaCreada;
+    NucleoElegido = nucleoelegido;
 }
-
 
 // Funciones parse
 
@@ -145,7 +167,7 @@ function parseNucleos(nucleos) {
 function varitaCreada() {
 
     arrayVarita.push(new Varita(MaderaElegida, NucleoElegido));
-
+    document.getElementById("contador").innerHTML = arrayVarita.length;
     if (arrayVarita.length == 1) {
         mensajes = document.getElementById("mensajes")
         mensajes.innerHTML = "Entonces, la primer varita que haz armado es de " + MaderaElegida.nombre + " y " + NucleoElegido.nombre + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!";

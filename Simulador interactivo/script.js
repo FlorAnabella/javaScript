@@ -7,7 +7,9 @@ let nucleos;
 let NucleoElegido;
 let arrayVarita = [];
 let varitas;
-let mensajes;
+
+const mensajes = document.getElementById("mensajes");
+const boton = document.getElementById("boton");
 
 // Clases y Objetos
 
@@ -18,7 +20,7 @@ class Madera {
         this.nombre = nombre;
     }
 
-    describirmadera() {
+    toString() {
         return "Excelente Elección! esta madera es de color " + this.color + ". " + this.descripcion;
     }
 };
@@ -28,12 +30,20 @@ class Nucleo {
         this.nombre = nombre;
         this.propiedad = propiedad;
     }
+
+    toString() {
+        return this.propiedad;
+    }
 };
 
 class Varita {
     constructor(madera, nucleo) {
         this.madera = madera;
         this.nucleo = nucleo;
+    }
+
+    toString() {
+        return this.madera.nombre + " y " + this.nucleo.nombre;
     }
 };
 
@@ -62,96 +72,71 @@ sessionStorage.setItem("Nucleo", JSON.stringify([
 
 function main() {
 
-    mensajes = document.getElementById("mensajes")
     mensajes.innerHTML = "Llegas a la tienda de Ollivander, cargando las cosas adquiridas en el camino. Entras a la tienda, y Garrick Ollivander se encuentra sentado en el piso, con materiales alrededor, agarrándose la cabeza. <br>Cuando te ve llegar, sus ojos se llenan de alegria!<br>'Joven mago!' exclama 'Se me han caído mis materiales y necesito armar tres varitas nuevas! si me ayudas, te llevas tu varita gratis!'";
     maderas = parseMaderas(JSON.parse(sessionStorage.getItem("Madera")));
     nucleos = parseNucleos(JSON.parse(sessionStorage.getItem("Nucleo")));
 }
 
+function mostrarOpciones(elementos, mensaje, proximaFaseCallback) {
+    elementos.sort((a, b) => {
+        if (a.nombre < b.nombre) {
+            return -1;
+        } else {
+            return 1;
+        }
+
+    }).forEach((element, index) => {
+        let radioBoton = document.createElement("input");
+        radioBoton.setAttribute("type", "radio");
+        radioBoton.setAttribute("name", "opciones");
+        radioBoton.setAttribute("id", index);
+        radioBoton.setAttribute("value", element.nombre);
+        document.getElementById("lista").appendChild(radioBoton);
+        let etiqueta = document.createElement("label");
+        etiqueta.setAttribute("for", index);
+        etiqueta.innerHTML = element.nombre;
+        document.getElementById("lista").appendChild(etiqueta);
+    });
+
+    mensajes.innerHTML = mensaje;
+    boton.onclick = proximaFaseCallback;
+}
+
+function elegirOpcion(elementos, proximaFaseCallback) {
+    const input = document.forms.lista.elements.opciones;
+    const elementoElegido = elementos.find(elemento => elemento.nombre.toLowerCase() == input.value.toLowerCase());
+    mensajes.innerHTML = elementoElegido.toString();
+    let lista = document.getElementById("lista");
+    while (lista.firstChild) {
+        lista.removeChild(lista.firstChild);
+    }
+    boton.onclick = proximaFaseCallback;
+    return elementoElegido;
+}
+
+
 // Funciones maderas
 
 function mostrarMaderas() {
-
-    maderas.sort((a, b) => {
-        if (a.nombre < b.nombre) {
-            return -1;
-        } else {
-            return 1;
-        }
-
-    }).forEach((mimadera, index) => {
-        let radioBoton = document.createElement("input");
-        radioBoton.setAttribute("type", "radio");
-        radioBoton.setAttribute("name", "maderas");
-        radioBoton.setAttribute("id", index);
-        radioBoton.setAttribute("value", mimadera.nombre);
-        document.getElementById("lista").appendChild(radioBoton);
-        let etiqueta = document.createElement("label");
-        etiqueta.setAttribute("for", index);
-        etiqueta.innerHTML = mimadera.nombre;
-        document.getElementById("lista").appendChild(etiqueta);
-    });
-
-    mensajes.innerHTML = "Elije una opción entre las siguientes maderas:";
-    document.getElementById("boton").onclick = elegirMadera;
+    const mensaje = "Elije una opción entre las siguientes maderas:";
+    mostrarOpciones(maderas, mensaje, elegirMadera);
 }
 
 function elegirMadera() {
-
-    // Solicita al usuario que elija una madera
-
-    let input = document.forms.lista.elements.maderas;
-    const maderaelegida = maderas.find(mimadera => mimadera.nombre.toLowerCase() == input.value.toLowerCase());
-    mensajes.innerHTML = maderaelegida.describirmadera();
-    let lista = document.getElementById("lista");
-    while (lista.firstChild) {
-        lista.removeChild(lista.firstChild);
-    }
-    document.getElementById("boton").onclick = mostrarNucleos;
-    MaderaElegida = maderaelegida;
+    // Muestra qué madera eligió
+    MaderaElegida = elegirOpcion(maderas, mostrarNucleos);
 }
+
 // Funciones nucleos
 
 function mostrarNucleos() {
-
-    let inputNucleo = document.createElement("input");
-    inputNucleo.id = "texto";
-    nucleos.sort((a, b) => {
-        if (a.nombre < b.nombre) {
-            return -1;
-        } else {
-            return 1;
-        }
-    }).forEach((minucleo, index) => {
-        let radioBoton = document.createElement("input");
-        radioBoton.setAttribute("type", "radio");
-        radioBoton.setAttribute("name", "nucleos");
-        radioBoton.setAttribute("id", index);
-        radioBoton.setAttribute("value", minucleo.nombre);
-        document.getElementById("lista").appendChild(radioBoton);
-        let etiqueta = document.createElement("label");
-        etiqueta.setAttribute("for", index);
-        etiqueta.innerHTML = minucleo.nombre;
-        document.getElementById("lista").appendChild(etiqueta);
-    });
-
-    mensajes.innerHTML = "Elije una opción entre los siguientes nucleos, CUIDADO! son frágiles!";
-    document.getElementById("boton").onclick = elegirNucleo;
+    const mensaje = "Elije una opción entre los siguientes nucleos, CUIDADO! son frágiles!";
+    mostrarOpciones(nucleos, mensaje, elegirNucleo);
 }
 
 function elegirNucleo() {
-
-    // Solicita al usuario que elija un Núcleo
-
-    let input = document.forms.lista.elements.nucleos;
-    const nucleoelegido = nucleos.find(minucleo => minucleo.nombre.toLowerCase() == input.value.toLowerCase());
-    mensajes.innerHTML = nucleoelegido.propiedad;
-    let lista = document.getElementById("lista");
-    while (lista.firstChild) {
-        lista.removeChild(lista.firstChild);
-    }
-    document.getElementById("boton").onclick = varitaCreada;
-    NucleoElegido = nucleoelegido;
+    // Muestra qué madera eligió
+    NucleoElegido = elegirOpcion(nucleos, varitaCreada);
 }
 
 // Funciones parse
@@ -165,26 +150,18 @@ function parseNucleos(nucleos) {
 }
 
 function varitaCreada() {
-
-    arrayVarita.push(new Varita(MaderaElegida, NucleoElegido));
+    let nuevaVarita = new Varita(MaderaElegida, NucleoElegido);
+    arrayVarita.push(nuevaVarita);
     document.getElementById("contador").innerHTML = arrayVarita.length;
+    boton.onclick = mostrarMaderas;
+
     if (arrayVarita.length == 1) {
-        mensajes = document.getElementById("mensajes")
-        mensajes.innerHTML = "Entonces, la primer varita que haz armado es de " + MaderaElegida.nombre + " y " + NucleoElegido.nombre + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!";
-
-        document.getElementById("boton").onclick = mostrarMaderas;
+        mensajes.innerHTML = "Entonces, la primer varita que haz armado es de " + nuevaVarita.toString() + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!";
     } else if (arrayVarita.length < 3) {
-
-        mensajes = document.getElementById("mensajes")
-        mensajes.innerHTML = "Genial! Tu segunda varita es de " + MaderaElegida.nombre + " y " + NucleoElegido.nombre + "! <br> Una varitas más!";
-
-        document.getElementById("boton").onclick = mostrarMaderas;
-
+        mensajes.innerHTML = "Genial! Tu segunda varita es de " + nuevaVarita.toString() + "! <br> Una varitas más!";
     } else {
         const catalogoFinal = arrayVarita.reduce((msj, mivarita) => { return msj + "<br>" + mivarita.madera.nombre + " con núcleo de " + mivarita.nucleo.nombre }, "");
-        mensajes = document.getElementById("mensajes")
         mensajes.innerHTML = "Excelente! Por lo que veo haz creador tres varitas en total: " + catalogoFinal + "<br> Muchísimas gracias! Es hora de elegir tu varita, joven mago, que Hogwarts te está esperando!";
-        let boton = document.getElementById("boton");
         document.getElementById("alertas").removeChild(boton);
     }
 }

@@ -1,15 +1,65 @@
 'use strict';
 // Variables globales
 
-let maderas;
 let MaderaElegida;
-let nucleos;
 let NucleoElegido;
-let arrayVarita = [];
-let varitas;
+
+let ollivander;
 
 const mensajes = document.getElementById("mensajes");
 const boton = document.getElementById("boton");
+const lista = document.getElementById("lista");
+
+// Si hubiera backend estos datos podrían venir de una base de datos
+const maderasBase = [
+    {
+        nombre: "Manzano",
+        color: "Gris plata",
+        descripcion: "Madera noble que se lleva mal con las artes obscuras"
+    },
+    {
+        nombre: "Cerezo",
+        color: "Caoba",
+        descripcion: "Una madera exótica que favorece a gente extravagante"
+    },
+    {
+        nombre: "Sauce",
+        color: "Peltre",
+        descripcion: "Una madera poco común ideal para magia curativa. Muy atractiva. Rechaza vanidosos"
+    },
+    {
+        nombre: "Serbal",
+        color: "Obscura",
+        descripcion: "Madera sólida y confiable, favorece los hechizos de protección"
+    },
+    {
+        nombre: "Laurel",
+        color: "Castaño",
+        descripcion: "Se dice que esta madera es incapaz de cometer actos deshonrosos, pero sin duda favorece a los que buscan gloria"
+    }
+];
+const nucleosBase = [
+    {
+        nombre: "Pelo de Veela",
+        propiedad: "Las varitas con este núcleo son temperamentales. Manejar con cuidado."
+    },
+    {
+        nombre: "Pluma de Fenix",
+        propiedad: "Las varitas con este núcleo son generalistas. No es habitual ser elegido por una de estas."
+    },
+    {
+        nombre: "Pelo de Unicornio",
+        propiedad: "Las varitas con este núcleo se vinculan fuertemente con su primer dueño. Son consistentes y confiables"
+    },
+    {
+        nombre: "Pluma de cola de un Pájaro de Trueno",
+        propiedad: "Las varitas con este núcleo son muy poderosas, pero dominarlas es realmente difícil. Muy valoradas por transmutadores."
+    },
+    {
+        nombre: "Pelo de Kelpie",
+        propiedad: "Las varitas con este núcleo son fáciles de obtener. En el pasado se usaban mucho, pero ya no son tan frecuentes."
+    }
+];
 
 // Clases y Objetos
 
@@ -47,25 +97,59 @@ class Varita {
     }
 };
 
+class Ollivander {
+    constructor(maderas, nucleos) {
+        this.maderas = maderas.map(m => new Madera(m.nombre, m.color, m.descripcion));
+        this.nucleos = nucleos.map(n => new Nucleo(n.nombre, n.propiedad));
+        this.varitas = [];
+    }
 
+    crearVarita() {
+        const madera = this.obtenerMadera(window.sessionStorage.getItem("MaderaElegida"));
+        const nucleo = this.obtenerNucleo(window.sessionStorage.getItem("NucleoElegido"));
+        const nuevaVarita = new Varita(madera, nucleo);
+        ollivander.varitas.push(nuevaVarita);
 
-// Materias primas + JSON
+        document.getElementById("contador").innerHTML = ollivander.varitas.length;
+        boton.onclick = mostrarMaderas;
 
-sessionStorage.setItem("Madera", JSON.stringify([
-    new Madera("Manzano", "Gris plata", "Madera noble que se lleva mal con las artes obscuras"),
-    new Madera("Cerezo", "Caoba", "Una madera exótica que favorece a gente extravagante"),
-    new Madera("Sauce", "Peltre", "Una madera poco común ideal para magia curativa. Muy atractiva. Rechaza vanidosos"),
-    new Madera("Serbal", "Obscura", "Madera sólida y confiable, favorece los hechizos de protección"),
-    new Madera("Laurel", "Castaño", "Se dice que esta madera es incapaz de cometer actos deshonrosos, pero sin duda favorece a los que buscan gloria")
-]));
+        if (ollivander.varitas.length == 1) {
+            mensajes.innerHTML = "Entonces, la primer varita que haz armado es de " + nuevaVarita.toString() + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!";
+        } else if (ollivander.varitas.length < 3) {
+            mensajes.innerHTML = "Genial! Tu segunda varita es de " + nuevaVarita.toString() + "! <br> Una varitas más!";
+        } else {
+            const catalogoFinal = ollivander.varitas.reduce((msj, mivarita) => { return msj + "<br>" + mivarita.madera.nombre + " con núcleo de " + mivarita.nucleo.nombre }, "");
+            mensajes.innerHTML = "Excelente! Por lo que veo haz creador tres varitas en total: " + catalogoFinal + "<br> Muchísimas gracias! Es hora de elegir tu varita, joven mago, que Hogwarts te está esperando!";
+            document.getElementById("alertas").removeChild(boton);
+        }
+    }
 
-sessionStorage.setItem("Nucleo", JSON.stringify([
-    new Nucleo("Pelo de Veela", "Las varitas con este núcleo son temperamentales. Manejar con cuidado."),
-    new Nucleo("Pluma de Fenix", "Las varitas con este núcleo son generalistas. No es habitual ser elegido por una de estas."),
-    new Nucleo("Pelo de Unicornio", "Las varitas con este núcleo se vinculan fuertemente con su primer dueño. Son consistentes y confiables"),
-    new Nucleo("Pluma de cola de un Pájaro de Trueno", "Las varitas con este núcleo son muy poderosas, pero dominarlas es realmente difícil. Muy valoradas por transmutadores."),
-    new Nucleo("Pelo de Kelpie", "Las varitas con este núcleo son fáciles de obtener. En el pasado se usaban mucho, pero ya no son tan frecuentes.")
-]));
+    elegirMadera() {
+        window.sessionStorage.setItem("MaderaElegida", elegirOpcion(this.maderas, mostrarNucleos));
+    }
+
+    elegirNucleo() {
+        window.sessionStorage.setItem("NucleoElegido", elegirOpcion(this.nucleos, varitaCreada));
+    }
+
+    obtenerMadera(nombre) {
+        return this.maderas.find(madera => madera.nombre.toLowerCase() == nombre.toLowerCase());
+    }
+
+    obtenerNucleo(nombre) {
+        return this.nucleos.find(nucleo => nucleo.nombre.toLowerCase() == nombre.toLowerCase());
+    }
+
+    mostrarMaderas() {
+        const mensaje = "Elije una opción entre las siguientes maderas:";
+        mostrarOpciones(this.maderas, mensaje, elegirMadera);
+    }
+
+    mostrarNucleos() {
+        const mensaje = "Elije una opción entre los siguientes nucleos, CUIDADO! son frágiles!";
+        mostrarOpciones(this.nucleos, mensaje, elegirNucleo);
+    }
+};
 
 
 // Funcion main
@@ -73,8 +157,7 @@ sessionStorage.setItem("Nucleo", JSON.stringify([
 function main() {
 
     mensajes.innerHTML = "Llegas a la tienda de Ollivander, cargando las cosas adquiridas en el camino. Entras a la tienda, y Garrick Ollivander se encuentra sentado en el piso, con materiales alrededor, agarrándose la cabeza. <br>Cuando te ve llegar, sus ojos se llenan de alegria!<br>'Joven mago!' exclama 'Se me han caído mis materiales y necesito armar tres varitas nuevas! si me ayudas, te llevas tu varita gratis!'";
-    maderas = parseMaderas(JSON.parse(sessionStorage.getItem("Madera")));
-    nucleos = parseNucleos(JSON.parse(sessionStorage.getItem("Nucleo")));
+    ollivander = new Ollivander(maderasBase, nucleosBase);
 }
 
 function mostrarOpciones(elementos, mensaje, proximaFaseCallback) {
@@ -86,16 +169,8 @@ function mostrarOpciones(elementos, mensaje, proximaFaseCallback) {
         }
 
     }).forEach((element, index) => {
-        let radioBoton = document.createElement("input");
-        radioBoton.setAttribute("type", "radio");
-        radioBoton.setAttribute("name", "opciones");
-        radioBoton.setAttribute("id", index);
-        radioBoton.setAttribute("value", element.nombre);
-        document.getElementById("lista").appendChild(radioBoton);
-        let etiqueta = document.createElement("label");
-        etiqueta.setAttribute("for", index);
-        etiqueta.innerHTML = element.nombre;
-        document.getElementById("lista").appendChild(etiqueta);
+        lista.innerHTML += `<input id="${index}" type="radio" name="opciones" value="${element.nombre}" />`;
+        lista.innerHTML += `<label for="${index}">${element.nombre}</label>`;
     });
 
     mensajes.innerHTML = mensaje;
@@ -104,64 +179,37 @@ function mostrarOpciones(elementos, mensaje, proximaFaseCallback) {
 
 function elegirOpcion(elementos, proximaFaseCallback) {
     const input = document.forms.lista.elements.opciones;
-    const elementoElegido = elementos.find(elemento => elemento.nombre.toLowerCase() == input.value.toLowerCase());
+    const valor = input.value;
+    const elementoElegido = elementos.find(elemento => elemento.nombre.toLowerCase() == valor.toLowerCase());
     mensajes.innerHTML = elementoElegido.toString();
-    let lista = document.getElementById("lista");
     while (lista.firstChild) {
         lista.removeChild(lista.firstChild);
     }
     boton.onclick = proximaFaseCallback;
-    return elementoElegido;
+    return valor;
 }
 
 
-// Funciones maderas
+// Funciones para que el botón avance la historia
 
+// Esto es algo redundante, pero lo hacemos porque si le paso el método al botón me cambia el valor de this.
+// Cada una de estas funciones está porque es "una pantalla diferente"
 function mostrarMaderas() {
-    const mensaje = "Elije una opción entre las siguientes maderas:";
-    mostrarOpciones(maderas, mensaje, elegirMadera);
+    ollivander.mostrarMaderas()
+}
+
+function mostrarNucleos() {
+    ollivander.mostrarNucleos()
 }
 
 function elegirMadera() {
-    // Muestra qué madera eligió
-    MaderaElegida = elegirOpcion(maderas, mostrarNucleos);
-}
-
-// Funciones nucleos
-
-function mostrarNucleos() {
-    const mensaje = "Elije una opción entre los siguientes nucleos, CUIDADO! son frágiles!";
-    mostrarOpciones(nucleos, mensaje, elegirNucleo);
+    ollivander.elegirMadera();
 }
 
 function elegirNucleo() {
-    // Muestra qué madera eligió
-    NucleoElegido = elegirOpcion(nucleos, varitaCreada);
-}
-
-// Funciones parse
-
-function parseMaderas(maderas) {
-    return maderas.map(m => new Madera(m.nombre, m.color, m.descripcion));
-}
-
-function parseNucleos(nucleos) {
-    return nucleos.map(n => new Nucleo(n.nombre, n.propiedad));
+    ollivander.elegirNucleo();
 }
 
 function varitaCreada() {
-    let nuevaVarita = new Varita(MaderaElegida, NucleoElegido);
-    arrayVarita.push(nuevaVarita);
-    document.getElementById("contador").innerHTML = arrayVarita.length;
-    boton.onclick = mostrarMaderas;
-
-    if (arrayVarita.length == 1) {
-        mensajes.innerHTML = "Entonces, la primer varita que haz armado es de " + nuevaVarita.toString() + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!";
-    } else if (arrayVarita.length < 3) {
-        mensajes.innerHTML = "Genial! Tu segunda varita es de " + nuevaVarita.toString() + "! <br> Una varitas más!";
-    } else {
-        const catalogoFinal = arrayVarita.reduce((msj, mivarita) => { return msj + "<br>" + mivarita.madera.nombre + " con núcleo de " + mivarita.nucleo.nombre }, "");
-        mensajes.innerHTML = "Excelente! Por lo que veo haz creador tres varitas en total: " + catalogoFinal + "<br> Muchísimas gracias! Es hora de elegir tu varita, joven mago, que Hogwarts te está esperando!";
-        document.getElementById("alertas").removeChild(boton);
-    }
+    ollivander.crearVarita();
 }

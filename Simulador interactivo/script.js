@@ -6,13 +6,27 @@ let NucleoElegido;
 
 let ollivander;
 
-const mensajes = document.getElementById("mensajes");
-const boton = document.getElementById("boton");
-const lista = document.getElementById("lista");
+const mensajes = $("#mensajes");
+const boton = $("#boton");
+const lista = $("#lista");
+
+// API
+
+const hechizosUrl = "https://fedeperin-harry-potter-api.herokuapp.com/hechizos"
+let hechizos;
+
+$(document).ready(function() {
+    boton.click(() => {
+        boton.fadeOut(100).fadeIn(100, mostrarMaderas);
+    });
+    $.getJSON(hechizosUrl, function(respuesta, estado) {
+        hechizos = respuesta.slice(0, 5);
+    });
+});
+
 
 // Si hubiera backend estos datos podrían venir de una base de datos
-const maderasBase = [
-    {
+const maderasBase = [{
         nombre: "Manzano",
         color: "Gris plata",
         descripcion: "Madera noble que se lleva mal con las artes obscuras"
@@ -38,8 +52,7 @@ const maderasBase = [
         descripcion: "Se dice que esta madera es incapaz de cometer actos deshonrosos, pero sin duda favorece a los que buscan gloria"
     }
 ];
-const nucleosBase = [
-    {
+const nucleosBase = [{
         nombre: "Pelo de Veela",
         propiedad: "Las varitas con este núcleo son temperamentales. Manejar con cuidado."
     },
@@ -111,16 +124,29 @@ class Ollivander {
         ollivander.varitas.push(nuevaVarita);
 
         document.getElementById("contador").innerHTML = ollivander.varitas.length;
-        boton.onclick = mostrarMaderas;
+        boton.off("click").click(() => {
+            boton.fadeOut(100).fadeIn(100, mostrarMaderas);
+        });
 
         if (ollivander.varitas.length == 1) {
-            mensajes.innerHTML = "Entonces, la primer varita que haz armado es de " + nuevaVarita.toString() + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!";
+            mensajes.html("Entonces, la primer varita que haz armado es de " + nuevaVarita.toString() + "! <br> Ahora, para llevarte tu varita gratis, necesito que ordenes dos varitas más!");
         } else if (ollivander.varitas.length < 3) {
-            mensajes.innerHTML = "Genial! Tu segunda varita es de " + nuevaVarita.toString() + "! <br> Una varitas más!";
+            mensajes.html("Genial! Tu segunda varita es de " + nuevaVarita.toString() + "! <br> Una varitas más!");
         } else {
-            const catalogoFinal = ollivander.varitas.reduce((msj, mivarita) => { return msj + "<br>" + mivarita.madera.nombre + " con núcleo de " + mivarita.nucleo.nombre }, "");
-            mensajes.innerHTML = "Excelente! Por lo que veo haz creador tres varitas en total: " + catalogoFinal + "<br> Muchísimas gracias! Es hora de elegir tu varita, joven mago, que Hogwarts te está esperando!";
-            document.getElementById("alertas").removeChild(boton);
+            const catalogoFinal = ollivander.varitas.reduce((msj, mivarita) => {
+                return msj + "<br>" + mivarita.madera.nombre + " con núcleo de " + mivarita.nucleo.nombre
+            }, "");
+            mensajes.html("Excelente! Por lo que veo haz creador tres varitas en total: " + catalogoFinal + "<br> Muchísimas gracias! Es hora de probar tu propia varita, joven mago!");
+            boton.off("click").click(() => {
+
+                const hechizoRandom = hechizos[Math.floor(Math.random() * hechizos.length)];
+                mensajes.html(hechizoRandom.hechizo).fadeOut(1000).fadeIn(1000, () => {
+                    mensajes.html("Perfecto! Gracias por confiar en Ollivander! Ahora vete,  que Hogwarts te está esperando!");
+                });
+                boton.remove();
+                this.probarVarita();
+            });
+
         }
     }
 
@@ -149,6 +175,7 @@ class Ollivander {
         const mensaje = "Elije una opción entre los siguientes nucleos, CUIDADO! son frágiles!";
         mostrarOpciones(this.nucleos, mensaje, elegirNucleo);
     }
+
 };
 
 
@@ -156,7 +183,7 @@ class Ollivander {
 
 function main() {
 
-    mensajes.innerHTML = "Llegas a la tienda de Ollivander, cargando las cosas adquiridas en el camino. Entras a la tienda, y Garrick Ollivander se encuentra sentado en el piso, con materiales alrededor, agarrándose la cabeza. <br>Cuando te ve llegar, sus ojos se llenan de alegria!<br>'Joven mago!' exclama 'Se me han caído mis materiales y necesito armar tres varitas nuevas! si me ayudas, te llevas tu varita gratis!'";
+    mensajes.html("Llegas a la tienda de Ollivander, cargando las cosas adquiridas en el camino. Entras a la tienda, y Garrick Ollivander se encuentra sentado en el piso, con materiales alrededor, agarrándose la cabeza. <br>Cuando te ve llegar, sus ojos se llenan de alegria!<br>'Joven mago!' exclama 'Se me han caído mis materiales y necesito armar tres varitas nuevas! si me ayudas, te llevas tu varita gratis!'");
     ollivander = new Ollivander(maderasBase, nucleosBase);
 }
 
@@ -169,23 +196,25 @@ function mostrarOpciones(elementos, mensaje, proximaFaseCallback) {
         }
 
     }).forEach((element, index) => {
-        lista.innerHTML += `<input id="${index}" type="radio" name="opciones" value="${element.nombre}" />`;
-        lista.innerHTML += `<label for="${index}">${element.nombre}</label>`;
+        lista.append(`<input id="${index}" type="radio" name="opciones" value="${element.nombre}" />`);
+        lista.append(`<label for="${index}">${element.nombre}</label>`);
     });
 
     mensajes.innerHTML = mensaje;
-    boton.onclick = proximaFaseCallback;
+    boton.off("click").click(() => {
+        boton.fadeOut(100).fadeIn(100, proximaFaseCallback);
+    });
 }
 
 function elegirOpcion(elementos, proximaFaseCallback) {
-    const input = document.forms.lista.elements.opciones;
-    const valor = input.value;
+
+    const valor = $("input[name=opciones]:checked").val();
     const elementoElegido = elementos.find(elemento => elemento.nombre.toLowerCase() == valor.toLowerCase());
-    mensajes.innerHTML = elementoElegido.toString();
-    while (lista.firstChild) {
-        lista.removeChild(lista.firstChild);
-    }
-    boton.onclick = proximaFaseCallback;
+    mensajes.html(elementoElegido.toString());
+    lista.empty()
+    boton.off("click").click(() => {
+        boton.fadeOut(100).fadeIn(100, proximaFaseCallback);
+    });
     return valor;
 }
 
@@ -212,4 +241,8 @@ function elegirNucleo() {
 
 function varitaCreada() {
     ollivander.crearVarita();
+}
+
+function probarVarita() {
+    ollivander.probarVarita();
 }
